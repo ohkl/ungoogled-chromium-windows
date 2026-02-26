@@ -1,0 +1,49 @@
+--- a/chrome/browser/ui/webui/downloads/downloads_list_tracker.cc
++++ b/chrome/browser/ui/webui/downloads/downloads_list_tracker.cc
+@@ -138,9 +138,7 @@ base::Value::Dict CreateDownloadItemValu
+   file_value->Set("percent", item->PercentComplete());
+   file_value->Set("progress_status_text", GetProgressStatusText(item));
+ 
+-  file_value->Set("url", item->GetURL().is_valid() &&
+-                                 !item->GetURL().is_empty() &&
+-                                 item->GetState() != DownloadItem::CANCELLED
++  file_value->Set("url", item->GetURL().is_valid() &&
++                                 !item->GetURL().is_empty()
+                              ? item->GetURL().spec()
+                              : std::string());
+ 
+--- a/chrome/browser/resources/downloads/item.ts
++++ b/chrome/browser/resources/downloads/item.ts
+@@ -378,8 +378,7 @@ export class DownloadsItemElement extend
+   }
+ 
+   private computeShowCopyDownloadLink_(): boolean {
+-    return this.data.state !== States.CANCELLED &&
+-        !!this.data.url && !this.data.file_externally_removed;
++    return !!this.data.url && !this.data.file_externally_removed;
+   }
+ 
+   private computeControlledBy_(): string {
+--- a/chrome/browser/ui/views/download/bubble/download_bubble_row_view.cc
++++ b/chrome/browser/ui/views/download/bubble/download_bubble_row_view.cc
+@@ -681,8 +681,7 @@ void DownloadBubbleRowView::OpenContexM
+       IDS_DOWNLOAD_LINK_SHOW);
+   context_menu_model_->AddItemWithIcon(
+       DownloadCommands::COPY_TO_CLIPBOARD, IDS_DOWNLOAD_LINK_COPY_TO_CLIPBOARD,
+-      ui::ImageModel::FromVectorIcon(views::kCopyIcon,
+-                                     ui::kColorMenuIcon, kCopyIconSize));
++      ui::ImageModel::FromVectorIcon(views::kCopyIcon, ui::kColorMenuIcon, kCopyIconSize));
+ 
+   context_menu_model_->AddSeparator(ui::NORMAL_SEPARATOR);
+   context_menu_model_->AddItem(DownloadCommands::CANCEL, IDS_DOWNLOAD_MENU_CANCEL);
+@@ -1095,9 +1094,7 @@ void DownloadBubbleRowView::AddQuickAct
+       /*is_primary=*/true);
+ 
+   if (base::FeatureList::IsEnabled(features::kDownloadBubbleV2) &&
+-      model_->ShouldShowCopyToClipboard() &&
+-      download_item->GetState() != download::DownloadItem::CANCELLED &&
+-      !model_->GetFileNameToReportUser().empty()) {
++      model_->ShouldShowCopyToClipboard()) {
+     AddIconButton(
+         base::BindRepeating(&DownloadBubbleRowView::ExecuteCommand,
+                             weak_factory_.GetWeakPtr(),
